@@ -1,0 +1,57 @@
+apiVersion: v1
+kind: Service
+metadata:
+        name: graf-server
+        labels:
+                app: grafana
+spec:
+        type: NodePort
+        ports:
+        - name: http
+          nodePort: 30030
+          port: 3000
+          targetPort: 3000
+        selector:
+                app: grafana
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+        name: graf-pv-claim
+        labels:
+                app: grafana
+spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+                requests:
+                        storage: 2Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+        name: graf-server
+        labels:
+                app: grafana
+spec:
+        replicas: 1
+        selector:
+                matchLabels:
+                        app: grafana
+        template:
+                metadata:
+                        labels:
+                                app: grafana
+                spec:
+                        containers:
+                        - name: graf-con
+                          image: vimal13/grafana
+                          ports:
+                          - containerPort: 3000
+                          volumeMounts:
+                          - name: graf-persistent-storage
+                            mountPath: /var/lib/grafana
+                        volumes:
+                        - name: graf-persistent-storage
+                          persistentVolumeClaim:
+                                  claimName: graf-pv-claim
